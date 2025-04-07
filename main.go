@@ -1,5 +1,11 @@
 package main
 
+import (
+	"github.com/rs/zerolog/log"
+
+	"itmrchow/todolist-task/infra"
+)
+
 func main() {
 	// init config
 	initConfig()
@@ -15,7 +21,12 @@ func main() {
 }
 
 func initConfig() {
+	err := infra.InitConfig()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to init config")
+	}
 
+	log.Info().Msg("config loaded")
 }
 
 // func initMysqlDb() *gorm.DB {
