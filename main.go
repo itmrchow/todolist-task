@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 
 	"itmrchow/todolist-task/infra"
+	"itmrchow/todolist-task/internal/repository"
 )
 
 func main() {
@@ -12,11 +13,11 @@ func main() {
 	initConfig()
 
 	// db conn
-	// mysqlConn := initMysqlDb()
-	initMysqlDb()
+	mysqlConn := initMysqlDb()
 
 	// repo
-	// repo := repository.NewUsersRepository(mysqlConn)
+	// repo := repository.NewTasksRepository(mysqlConn)
+	repository.NewTasksRepository(mysqlConn)
 
 	// grpc
 	// log.Fatal().Err(RunGrpcHandler(repo)).Msg("failed to listen")
