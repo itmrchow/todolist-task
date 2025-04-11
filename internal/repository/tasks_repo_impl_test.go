@@ -121,3 +121,128 @@ func (s *TaskTestSuite) TestGetTask_GetChildTask() {
 	s.Assert().Equal(entity.StatusPending, createdTask.Status)
 
 }
+
+func (s *TaskTestSuite) TestUpdateTask() {
+	// prepare
+	taskID := "123e4567-e89b-12d3-a456-426614174000"
+	taskMap := map[string]any{
+		"title": "updated-title",
+	}
+
+	// execute
+	err := s.taskRepo.UpdateTask(context.Background(), taskID, taskMap)
+	s.Assert().NoError(err)
+
+	// assert
+	var updatedTask entity.Task
+	s.db.First(&updatedTask, "id = ?", taskID)
+	s.Assert().Equal("updated-title", updatedTask.Title)
+	s.Assert().Equal("test-description-1", updatedTask.Description)
+	s.Assert().NotEqual(updatedTask.CreatedAt, updatedTask.UpdatedAt)
+}
+
+func (s *TaskTestSuite) TestDeleteTask() {
+	// prepare
+	taskID := "123e4567-e89b-12d3-a456-426614174000"
+
+	// execute
+	err := s.taskRepo.DeleteTask(context.Background(), taskID)
+	s.Assert().NoError(err)
+
+	// assert
+	var deletedTask entity.Task
+	s.db.First(&deletedTask, "id = ?", taskID)
+	s.Assert().Error(gorm.ErrRecordNotFound)
+}
+
+func (s *TaskTestSuite) TestFindTask_QueryByUserIDWithParentTask() {
+	// prepare
+	params := FindTaskParams{
+		UserID: "123e4567-e89b-12d3-a456-426614174001",
+	}
+	pageReq := &entity.PageReqInfo{
+		Page:  1,
+		Limit: 5,
+		Sort: []entity.SortOrder{
+			{
+				Property:  "created_at",
+				Direction: entity.SortDirectionAsc,
+			},
+		},
+	}
+
+	// execute
+	tasks, pageInfo, err := s.taskRepo.FindTask(context.Background(), params, pageReq)
+	s.Assert().NoError(err)
+
+	// assert
+	s.Assert().EqualValues(1, len(tasks))
+	s.Assert().EqualValues(1, pageInfo.Page)
+	s.Assert().EqualValues(5, pageInfo.Limit)
+	s.Assert().EqualValues(1, pageInfo.Total)
+	s.Assert().EqualValues(1, pageInfo.TotalPages)
+}
+
+func (s *TaskTestSuite) TestFindTask_QueryByUserIDWithChildTask() {
+	// prepare
+	taskID := "123e4567-e89b-12d3-a456-426614174000"
+	params := FindTaskParams{
+		UserID: "123e4567-e89b-12d3-a456-426614174001",
+		TaskID: &taskID,
+	}
+	pageReq := &entity.PageReqInfo{
+		Page:  1,
+		Limit: 5,
+		Sort: []entity.SortOrder{
+			{
+				Property:  "created_at",
+				Direction: entity.SortDirectionAsc,
+			},
+		},
+	}
+
+	// execute
+	tasks, pageInfo, err := s.taskRepo.FindTask(context.Background(), params, pageReq)
+	s.Assert().NoError(err)
+
+	// assert
+	s.Assert().EqualValues(5, len(tasks))
+	s.Assert().EqualValues(1, pageInfo.Page)
+	s.Assert().EqualValues(5, pageInfo.Limit)
+	s.Assert().EqualValues(7, pageInfo.Total)
+	s.Assert().EqualValues(2, pageInfo.TotalPages)
+}
+
+func (s *TaskTestSuite) TestFindTask_QueryByUserIDWithChildTask_WithStatus() {
+	// prepare
+	taskID := "123e4567-e89b-12d3-a456-426614174000"
+	status := entity.StatusDone
+	params := FindTaskParams{
+		UserID: "123e4567-e89b-12d3-a456-426614174001",
+		TaskID: &taskID,
+		Status: &status,
+	}
+	pageReq := &entity.PageReqInfo{
+		Page:  1,
+		Limit: 5,
+		Sort: []entity.SortOrder{
+			{
+				Property:  "created_at",
+				Direction: entity.SortDirectionAsc,
+			},
+		},
+	}
+
+	// execute
+	tasks, pageInfo, err := s.taskRepo.FindTask(context.Background(), params, pageReq)
+	s.Assert().NoError(err)
+
+	// assert
+	s.Assert().EqualValues(1, len(tasks))
+	s.Assert().EqualValues(1, pageInfo.Page)
+	s.Assert().EqualValues(5, pageInfo.Limit)
+	s.Assert().EqualValues(1, pageInfo.Total)
+	s.Assert().EqualValues(1, pageInfo.TotalPages)
+
+	s.Assert().Equal(entity.StatusDone, tasks[0].Status)
+}

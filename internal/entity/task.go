@@ -5,12 +5,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type Status string
+type TaskStatus string
 
 const (
-	StatusPending    Status = "pending"
-	StatusInProgress Status = "in_progress"
-	StatusDone       Status = "done"
+	StatusPending    TaskStatus = "pending"
+	StatusInProgress TaskStatus = "in_progress"
+	StatusDone       TaskStatus = "done"
 )
 
 type Task struct {
@@ -20,6 +20,6 @@ type Task struct {
 	TaskListID  *uuid.UUID `gorm:"index:idx_task_parent;foreignKey:ID;references:tasks"`
 	Title       string     `gorm:"size:255;not null"`
 	Description string     `gorm:"size:255;not null"`
-	Status      Status     `gorm:"size:32;not null"`
+	Status      TaskStatus `gorm:"size:32;not null"`
 	TaskList    *[]Task    `gorm:"foreignKey:TaskListID;references:ID"`
 }
